@@ -1,19 +1,20 @@
 package gfs2
+
 import (
 	"fmt"
     "path/filepath"
     "strings"
 )
-func GetMetric() (Metric, error) {
+func GetMetric() (ClusterMetric, error) {
 	resultCh := make(chan struct {
-		Metric
+		ClusterMetric
 		error
 	})
 
 	go func() {
 		result, parseErr := ParseMetric(DATA)
 		resultCh <- struct {
-			Metric
+			ClusterMetric
 			error
 		}{result, parseErr}
 	}()
@@ -22,7 +23,7 @@ func GetMetric() (Metric, error) {
 	r := <-resultCh
 	if err != nil {
 		return nil, err
-	return r.Metric, r.error
+	return r.ClusterMetric, r.error
 }
 
 func ParseMetric(r io.Reader) (Metric, error) {

@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 
-	"github.com/vatson112/gfs2-exporter/gfs2"
+	"github.com/Vatson112/gfs2-exporter/gfs2"
 )
 
 type collector struct{}
@@ -76,19 +76,26 @@ func (c *collector) Collect(metricChan chan<- prometheus.Metric) {
 		return
 	}
 	metricChan <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, 1)
+	for clusterName, cluster := range clusterMetric {
+		for fsName, fs := range cluster {
+			metricChan <- prometheus.MustNewConstMetric(glocksDesc, prometheus.CounterValue, float64(fs.Value), clusterName, fsName, fs.State)
+			metricChan <- prometheus.MustNewConstMetric(dlmRequestsDesc, prometheus.CounterValue, float64(fs.Value), clusterName, fsName)
+			metricChan <- prometheus.MustNewConstMetric(glocksRequestsDesc, prometheus.CounterValue, float64(fs.Value), clusterName, fsName)
+		}
 
+	}
 }
 
 func main() {
 	var (
-		listenAddress string
-		metricsPath   string
+		listenAddress string = ":9457"
+		metricsPath   string = "/metrics"
 	)
 
 	// listenAddress = kingpin.Flag("web.listen-address", "Address on which to expose metrics and web interface.").Default(":9457").String()
-	flag.StringVar(&listenAddress, "listen_address", ":9457", "Address on which to expose metrics and web interface. Default: :9457 ")
+	flag.StringVar(&listenAddress, "-listen_address", listenAddress, "Address on which to expose metrics and web interface. Default: :9457 ")
 	// metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-	flag.StringVar(&metricsPath, "metrics_path", "/metrics", "Address on which to expose metrics and web interface. Default: /metrics ")
+	flag.StringVar(&metricsPath, "-metrics_path", metricsPath, "Address on which to expose metrics and web interface. Default: /metrics ")
 	flag.Parse()
 
 	log.Infoln("Starting gfs2_exporter", version.Info())
